@@ -1,0 +1,83 @@
+﻿@page "/list"
+@inject IReceptionService ReceptionService
+@using MudSpeRece.Shared
+@using System.Net.Http.Json
+@using System.Web
+
+<h3>receptions</h3>
+
+
+@if (ReceptionService.Receptions == null)
+{
+        <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>受付日時</th>
+                <th>受付者</th>
+                <th>登録者</th>
+                <th>得意先名</th>
+                <th>内容</th>
+                <th>コンテナ</th>
+                <th>作業</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var reception in ReceptionService.Receptions)
+            {
+                    <tr>
+                        <td>@reception.Id</td>
+                        <td>@reception.RecDate</td>
+                        <td>@reception.RegName</td>
+                        <td>@reception.RecName</td>
+                        <td>@reception.CusName</td>
+                        <td>@reception.Body</td>
+                        <td>@reception.Containa</td>
+
+                        <td>@reception.WorkDivisionId</td>
+
+                    @switch (@reception.WorkDivisionId)
+                    {
+                        case 0:
+                                        <td class="align-middle"><font color = "greenr" >設置</font></td>
+                            break;
+                        case 1:
+                                        <td class="align-middle"><font color = "red">引上</font></td>
+                            break;
+                        case 2:
+                                        <td class="align-middle"><font color = "darkviolet"> 交換 </font></td>
+                            break;
+                        case 3:
+                                        <td class="align-middle">回収</td>
+                            break;
+                        case 4:
+                                        <td class="align-middle">持込</td>
+                            break;
+                        default:
+                                        <td class="align-middle">そ他</td>
+                            break;
+                    }
+
+
+                        <td>
+                        </td>
+                    </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ReceptionService.GetReceptions();
+    }
+
+}

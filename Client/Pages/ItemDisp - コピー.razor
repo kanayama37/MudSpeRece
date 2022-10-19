@@ -1,0 +1,147 @@
+﻿@page "/itemx"
+@page "/itemx/{id:int}"
+@using System.Text.Json
+@inject IReceptionService ReceptionService
+
+@if (Id == null)
+{
+        <PageTitle>新規受付</PageTitle>
+        <h3>Create a new Super Hero</h3>
+}
+else
+{
+        <PageTitle>修正受付</PageTitle>
+        <h3>Edit {@Id} </h3>
+}
+
+<EditForm Model="@reception" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator/>
+    <MudCard>
+        <MudCardContent>
+            <MudNumericField Label="Userid" @bind-Value="reception.Userid"
+                             For="@(() => reception.Userid)"
+                             HelperText="Minimum value is 1.">
+            </MudNumericField>
+
+            <MudDatePicker Label="日付" Editable="true" @bind-Date="reception.RecDate" Placeholder="Select Date" />
+
+            <MudTextField Label="受付者" @bind-Value="reception.RegName"
+                          For="@(() => reception.RegName)">
+            </MudTextField>
+
+            <MudTextField Label="登録者" @bind-Value="reception.RecName"
+                          For="@(() => reception.RecName)">
+            </MudTextField>
+
+            <MudTextField Label="内容" @bind-Value="reception.Body"
+                          For="@(() => reception.Body)">
+            </MudTextField>
+
+            <MudTextField Label="得意先名" @bind-Value="reception.CusName"
+                          For="@(() => reception.CusName)">
+            </MudTextField>
+
+            <MudTextField Label="コンテナ" @bind-Value="reception.Containa"
+                          For="@(() => reception.Containa)">
+            </MudTextField>
+
+            <MudRadioGroup @bind-SelectedOption="@reception.WorkDivisionId">
+                <MudRadio Option="0" Color="Color.Primary">設置</MudRadio>
+                <MudRadio Option="1" Color="Color.Primary">引上</MudRadio>
+                <MudRadio Option="2" Color="Color.Primary">交換</MudRadio>
+                <MudRadio Option="3" Color="Color.Primary">回収</MudRadio>
+                <MudRadio Option="4" Color="Color.Primary">持込</MudRadio>
+                <MudRadio Option="5" Color="Color.Primary">その他</MudRadio>
+            </MudRadioGroup>
+
+            <MudCheckBox @bind-Checked="@reception.Checkbox" Color="Color.Primary">チェック</MudCheckBox>
+            <MudCheckBox @bind-Checked="@reception.Checkbox1" Color="Color.Primary">重要</MudCheckBox>
+
+
+        </MudCardContent>
+    </MudCard>
+
+    <MudButton ButtonType="ButtonType.Submit" Class="mr-4 mt-4">
+        @(isNew ? "新規作成" : "修正")
+    </MudButton>
+
+    @if (!isNew)
+    {
+            <MudButton @onclick="DeleteReception" Class="mt-4">削除</MudButton>
+    }
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    Reception reception = new Reception();
+    string btnText = string.Empty;
+
+    bool isNew = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id == null)
+        {
+            isNew = true;
+            btnText = "新規作成";
+
+            reception.RecDate = DateTime.Now;
+            reception.Userid = 0;
+            reception.RegName = "";
+            reception.RecName = "";
+            reception.CusName = "";
+            reception.Body = "";
+            reception.Containa = "";
+            reception.WorkDivisionId = 5;
+            reception.Checkbox = 0;
+            reception.Checkbox1 = 0;
+            reception.Checkbox2 = 0;
+            reception.Checkbox3 = 0;
+            reception.CreatedAt = DateTime.Now;
+            reception.UpdatedAt = DateTime.Now;
+        }
+        else
+        {
+            isNew = false;
+            btnText = "修正";
+        }
+
+        // btnText = Id == null ? "新規作成" : "修正";
+    }
+
+    // コンポーネント初期化　パラメータ更新時
+    protected override async Task OnParametersSetAsync()
+    {
+        if (isNew)  // 作成時現在日付セット
+        {
+            reception.RecDate = DateTime.Now;
+        }
+        else       // 更新時データ読込
+        {
+            reception = await ReceptionService.GetSingleReception((int)Id);
+        }
+
+    }
+    // 作成修正ボタン押下
+    async Task HandleSubmit()
+    {
+        if (isNew)
+        {
+            await ReceptionService.CreateReception(reception);
+        }
+        else
+        {
+            await ReceptionService.UpdateReception(reception);
+        }
+    }
+    // 削除ボタン押下
+    async Task DeleteReception()
+    {
+        await ReceptionService.DeleteReception(reception.Id);
+    }
+
+}
+
