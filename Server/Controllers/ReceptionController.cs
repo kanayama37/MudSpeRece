@@ -36,5 +36,64 @@ namespace MudSpeRece.Server.Controllers
         {
             return await _context.Receptions.ToListAsync();
         }
+
+
+
+        // データ参照
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Reception>> GetReception(int id)
+        {
+            var reception = await _context.Receptions
+                .FirstOrDefaultAsync(h => h.Id == id);
+            if (reception == null)
+            {
+                return NotFound("Sorry, no reception here. :/");
+            }
+            return Ok(reception);
+        }
+
+        //　データ更新処理
+        [HttpPut("{id}")]
+        public async Task<ActionResult<List<Reception>>> UpdateSuperHero(Reception reception, int id)
+        {
+            var dbReception = await _context.Receptions
+                .FirstOrDefaultAsync(sh => sh.Id == id);
+            if (dbReception == null)
+                return NotFound("Sorry, but no reception for you. :/");
+
+            dbReception.Userid = reception.Userid;
+            dbReception.RecDate = reception.RecDate;
+            dbReception.RegName = reception.RegName;
+            dbReception.RecName = reception.RecName;
+            dbReception.CusName = reception.CusName;
+            dbReception.Body = reception.Body;
+            dbReception.Containa = reception.Containa;
+            dbReception.WorkDivisionId = reception.WorkDivisionId;
+            dbReception.Checkbox = reception.Checkbox;
+            dbReception.Checkbox1 = reception.Checkbox1;
+            dbReception.Checkbox2 = reception.Checkbox2;
+            dbReception.Checkbox3 = reception.Checkbox3;
+            dbReception.CreatedAt = reception.CreatedAt;
+            dbReception.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(await GetDbReceptions());
+        }
+
+        //　データ削除処理
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<List<Reception>>> DeleteReception(int id)
+        {
+            var dbReception = await _context.Receptions
+                .FirstOrDefaultAsync(sh => sh.Id == id);
+            if (dbReception == null)
+                return NotFound("Sorry, but no Reception for you. :/");
+
+            _context.Receptions.Remove(dbReception);
+            await _context.SaveChangesAsync();
+
+            return Ok(await GetDbReceptions());
+        }
     }
 }
