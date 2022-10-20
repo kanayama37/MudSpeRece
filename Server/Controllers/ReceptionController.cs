@@ -14,13 +14,22 @@ namespace MudSpeRece.Server.Controllers
             _context = context;
         }
 
-
         [HttpGet]
-        public async Task<ActionResult<List<Reception>>> GetReceptions()
+        public async Task<ActionResult<List<Reception>>> GetReceptions([FromQuery] string? cusName)
         {
-            var receptions = await _context.Receptions.ToListAsync();
+            var receptions = await _context.Receptions
+                .WhereIf(!string.IsNullOrWhiteSpace(cusName), x => x.CusName.Contains(cusName))
+                .ToListAsync();
             return Ok(receptions);
         }
+
+        //[HttpGet]
+        //public async Task<ActionResult<List<Reception>>> GetReceptions()
+        //{
+        //    var receptions = await _context.Receptions.ToListAsync();
+        //    return Ok(receptions);
+        //}
+
         //　データ作成処理
         [HttpPost]
         public async Task<ActionResult<List<Reception>>> CreateReception(Reception reception)
@@ -95,5 +104,7 @@ namespace MudSpeRece.Server.Controllers
 
             return Ok(await GetDbReceptions());
         }
+
+        
     }
 }

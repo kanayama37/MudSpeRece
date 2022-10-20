@@ -4,6 +4,7 @@
 @using MudSpeRece.Shared
 @using System.Net.Http.Json
 @using System.Web
+@using Microsoft.AspNetCore.WebUtilities
 
 
 <PageTitle>受付一覧</PageTitle>
@@ -16,57 +17,77 @@
 }
 else
 {
-        <MudTable Items="ReceptionService.Receptions" Hover="true" Elevation="0">
-            <ColGroup>
-                <col style="width: 30px;" />
-                <col style="width: 30px;" />
-                <col style="width: 60px;" />
-                <col style="width: 60px;" />
-                <col style="width: 60px;" />
-                <col style="width: 60px;" />
-                <col style="width: 60px;" />
-                <col style="width: 60px;" />
-                <col style="width: 30px;" />
-            </ColGroup>
-            <HeaderContent>
-                <MudTh>ID</MudTh>
-                <MudTh>受付日時</MudTh>
-                <MudTh>受付者</MudTh>
-                <MudTh>登録者</MudTh>
-                <MudTh>得意先名</MudTh>
-                <MudTh>内容</MudTh>
-                <MudTh>コンテナ</MudTh>
-                <MudTh>作業</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Id">@context.Id</MudTd>
-                <MudTd DataLabel="受付日時">@context.RecDate</MudTd>
-                <MudTd DataLabel="受付者">@context.RegName</MudTd>
-                <MudTd DataLabel="登録者">@context.RecName</MudTd>
-                <MudTd DataLabel="得意先名">@context.CusName</MudTd>
-                <MudTd DataLabel="内容">@context.Body</MudTd>
-                <MudTd DataLabel="コンテナ">@context.Containa</MudTd>
-                <MudTd DataLabel="作業">@context.WorkDivisionId</MudTd>
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit"
-                    Color="Color.Info"  Size="Size.Small"
-                    OnClick="@(() => ShowReception(context.Id))">修正</MudButton>
-            </RowTemplate>
-            <PagerContent>
-                <MudTablePager PageSizeOptions="new int[]{10,50, 100}" />
-            </PagerContent>
-        </MudTable>
-        <MudButton StartIcon="@Icons.Material.Filled.Create" Color="Color.Info"  Size="Size.Medium"
-                OnClick=CreateNewReception>新規作成
-        </MudButton>
+    <MudCard>
+        <EditForm Model="condition" OnValidSubmit="HandleSubmit">
+                <MudTextField Label="得意先名" @bind-Value="condition.CusName">
+            </MudTextField>
+            <MudButton ButtonType="ButtonType.Submit" Class="mr-4 mt-4">検索</MudButton>
+        </EditForm>
+    </MudCard>
+
+    <MudTable Items="ReceptionService.Receptions" Hover="true" Elevation="0">
+        <ColGroup>
+            <col style="width: 30px;" />
+            <col style="width: 30px;" />
+            <col style="width: 60px;" />
+            <col style="width: 60px;" />
+            <col style="width: 60px;" />
+            <col style="width: 60px;" />
+            <col style="width: 60px;" />
+            <col style="width: 60px;" />
+            <col style="width: 30px;" />
+        </ColGroup>
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>受付日時</MudTh>
+            <MudTh>受付者</MudTh>
+            <MudTh>登録者</MudTh>
+            <MudTh>得意先名</MudTh>
+            <MudTh>内容</MudTh>
+            <MudTh>コンテナ</MudTh>
+            <MudTh>作業</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="受付日時">@context.RecDate</MudTd>
+            <MudTd DataLabel="受付者">@context.RegName</MudTd>
+            <MudTd DataLabel="登録者">@context.RecName</MudTd>
+            <MudTd DataLabel="得意先名">@context.CusName</MudTd>
+            <MudTd DataLabel="内容">@context.Body</MudTd>
+            <MudTd DataLabel="コンテナ">@context.Containa</MudTd>
+            <MudTd DataLabel="作業">@context.WorkDivisionId</MudTd>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit"
+                Color="Color.Info"  Size="Size.Small"
+                OnClick="@(() => ShowReception(context.Id))">修正</MudButton>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[]{10,50, 100}" />
+        </PagerContent>
+    </MudTable>
+    <MudButton StartIcon="@Icons.Material.Filled.Create" Color="Color.Info"  Size="Size.Medium"
+            OnClick=CreateNewReception>新規作成
+    </MudButton>
     
 }
 
 
 
 @code {
+
+    Reception reception = new Reception();
+
+    private ReceptionSearchCondition condition = new ReceptionSearchCondition();
+
     protected override async Task OnInitializedAsync()
     {
-        await ReceptionService.GetReceptions();
+        // await ReceptionService.GetReceptions();
+
+        // 画面初回表示時にクエリーパラメーターがある場合は、検索条件にセットする
+        GetQueryString();
+
+        await Search();
+
+        NavigationManager.LocationChanged += HandleLocationChanged;
     }
     void CreateNewReception()
     {
@@ -75,6 +96,46 @@ else
     void ShowReception(int id)
     {
         NavigationManager.NavigateTo($"item/{id}");
+    }
+
+
+
+    //  再表示処理
+    private void HandleSubmit()
+    {
+        Dictionary<string, string> queryParams = CreateQueryParam();
+
+        NavigationManager.NavigateTo(QueryHelpers.AddQueryString("/", queryParams));
+    }
+    //  検索開始
+    private async Task Search()
+    {
+        Dictionary<string, string> queryParams = CreateQueryParam();
+        await ReceptionService.GetSearchReceptions(queryParams);
+        StateHasChanged();
+    }
+    //  検索パラメータ作成
+    private Dictionary<string, string> CreateQueryParam()
+    {
+        var queryParams = new Dictionary<string, string>();
+        if (!string.IsNullOrWhiteSpace(condition.CusName)) { queryParams.Add("cusName", condition.CusName); }
+        return queryParams;
+    }
+    //  検索文字列のセット
+    private void GetQueryString()
+    {
+        var uriQuery = HttpUtility.ParseQueryString(new Uri(NavigationManager.Uri).Query);
+        condition.CusName = uriQuery.Get("cusName");
+        //condition.CusName = "イノチオ";
+    }
+    private void HandleLocationChanged(object sender, LocationChangedEventArgs args)
+    {
+        GetQueryString();
+
+        InvokeAsync(async () =>
+        {
+            await Search();
+        });
     }
 
 }

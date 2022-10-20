@@ -22,5 +22,8 @@ namespace MudSpeRece.Client.Services.ReceptionService
         // 受付データ削除
         Task DeleteReception(int id);
 
+        // 受付データ検索読み込み
+        Task GetSearchReceptions(Dictionary<string, string> queryParams);
+
     }
 }

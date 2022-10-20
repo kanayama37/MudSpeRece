@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using MudSpeRece.Shared;
 using System.Net.Http.Json;
 
@@ -56,6 +57,15 @@ namespace MudSpeRece.Client.Services.ReceptionService
             if (result != null)
                 return result;
             throw new Exception("Reception not found!");
+        }
+
+        public async Task GetSearchReceptions(Dictionary<string, string> queryParams)
+        {
+            //Console.WriteLine("test" );
+            //Console.WriteLine(queryParams);
+            var result = await _http.GetFromJsonAsync<List<Reception>>(QueryHelpers.AddQueryString("api/reception", queryParams));
+            if (result != null)
+                Receptions = result;
         }
     }
 }
